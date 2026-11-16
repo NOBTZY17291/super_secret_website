@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="A cute little quiz for my baby">
+  <title>Hi baby</title>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600&family=Outfit:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "Outfit", system-ui, sans-serif;
+      background: linear-gradient(160deg, #fff5f8 0%, #ffe4ec 45%, #fde8ef 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      color: #4a3a3f;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* lowest z-index floating background stickers */
+    .bg-layer {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .bg-sticker {
+      position: absolute;
+      opacity: 0.22;
+      filter: blur(0.3px);
+      animation: driftBg 18s ease-in-out infinite;
+    }
+    .bg-sticker img { width: 100%; height: auto; display: block; }
+
+    @keyframes driftBg {
+      0%, 100% { transform: translate(0, 0) rotate(var(--r, 0deg)); }
+      25% { transform: translate(12px, -18px) rotate(calc(var(--r, 0deg) + 6deg)); }
+      50% { transform: translate(-10px, -8px) rotate(calc(var(--r, 0deg) - 4deg)); }
+      75% { transform: translate(8px, 10px) rotate(calc(var(--r, 0deg) + 3deg)); }
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0) rotate(var(--r, 0deg)); }
+      50% { transform: translateY(-12px) rotate(var(--r, 0deg)); }
+    }
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+
+    .card {
+      position: relative;
+      z-index: 2;
+      background: linear-gradient(145deg, #fff9fb, #ffe8f0);
+      border: 5px solid #fff;
+      border-radius: 24px;
+      width: min(340px, 92vw);
+      min-height: 300px;
+      padding: 2rem 1.5rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      box-shadow:
+        0 14px 36px rgba(232, 122, 156, 0.22),
+        0 4px 12px rgba(0, 0, 0, 0.05);
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+    }
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 18px 40px rgba(232, 122, 156, 0.28);
+    }
+
+    .title {
+      font-size: 0.9rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #e85a8b;
+      margin-bottom: 0.6rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .title img { width: 22px; height: auto; }
+
+    #question {
+      font-size: 1.35rem;
+      font-weight: 600;
+      color: #5a3f47;
+      line-height: 1.4;
+      margin-bottom: 1.6rem;
+      min-height: 3.2em;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .buttons {
+      display: flex;
+      gap: 0.9rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .btn {
+      appearance: none;
+      border: none;
+      background: #ff8fab;
+      color: white;
+      font-size: 1.05rem;
+      font-weight: 600;
+      padding: 0.7rem 1.35rem;
+      border-radius: 999px;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(255, 105, 180, 0.35);
+      transition: all 0.2s ease;
+      min-width: 110px;
+    }
+    .btn:hover {
+      background: #ff6b9d;
+      transform: scale(1.06);
+      box-shadow: 0 6px 18px rgba(255, 105, 180, 0.45);
+    }
+    .btn:active { transform: scale(0.97); }
+    .btn:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
+
+    #feed {
+      position: fixed;
+      top: 1.25rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(-120%);
+      padding: 0.7rem 1.4rem;
+      border-radius: 999px;
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: white;
+      z-index: 10;
+      opacity: 0;
+      transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+      pointer-events: none;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+    }
+    #feed.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+    #feed.correct { background: linear-gradient(135deg, #7ec8a3, #5bbf8a); }
+    #feed.wrong { background: linear-gradient(135deg, #ff6b6b, #ee5a5a); }
+
+    .final {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .final.show { display: flex; }
+    .final h2 { font-size: 1.55rem; color: #e85a8b; }
+    .final p { font-size: 1.05rem; color: #6b4f57; max-width: 260px; }
+    .final img { width: 64px; height: auto; animation: bounce 1.2s ease infinite; }
+
+    .progress {
+      margin-top: 1.4rem;
+      font-size: 0.85rem;
+      color: #c47a95;
+      letter-spacing: 0.04em;
+    }
+    .quiz-content.hidden { display: none; }
+
+    /* soft side decorations on card */
+    .card-deco {
+      position: absolute;
+      width: 48px;
+      opacity: 0.9;
+      pointer-events: none;
+    }
+    .card-deco.tl { top: -18px; left: -12px; transform: rotate(-12deg); }
+    .card-deco.tr { top: -14px; right: -14px; transform: rotate(10deg); }
+    .card-deco.bl { bottom: -16px; left: -10px; transform: rotate(8deg); }
+  </style>
+</head>
+<body>
+  <div class="bg-layer" aria-hidden="true">
+    <div class="bg-sticker" style="top:6%;left:4%;width:90px;--r:-8deg;animation-duration:20s">
+      <img src="stickers/my_melody_pose_01.png" alt="">
+    </div>
+    <div class="bg-sticker" style="top:12%;right:5%;width:80px;--r:6deg;animation-duration:22s;animation-delay:-3s">
+      <img src="stickers/my_melody_peeking.png" alt="">
+    </div>
+    <div class="bg-sticker" style="top:40%;left:2%;width:70px;--r:-4deg;animation-duration:18s;animation-delay:-6s">
+      <img src="stickers/flower_bouquet.png" alt="">
+    </div>
+    <div class="bg-sticker" style="bottom:18%;right:4%;width:75px;--r:5deg;animation-duration:24s;animation-delay:-2s">
+      <img src="stickers/balloon.png" alt="">
+    </div>
+    <div class="bg-sticker" style="bottom:10%;left:6%;width:60px;--r:-6deg;animation-duration:19s;animation-delay:-8s">
+      <img src="stickers/strawberry.png" alt="">
+    </div>
+    <div class="bg-sticker" style="top:55%;right:8%;width:55px;--r:3deg;animation-duration:21s;animation-delay:-4s">
+      <img src="stickers/daisy.png" alt="">
+    </div>
+    <div class="bg-sticker" style="top:28%;left:18%;width:45px;--r:-10deg;animation-duration:17s;animation-delay:-1s">
+      <img src="stickers/heart.png" alt="">
+    </div>
+    <div class="bg-sticker" style="bottom:35%;left:22%;width:50px;--r:8deg;animation-duration:23s;animation-delay:-7s">
+      <img src="stickers/cloud.png" alt="">
+    </div>
+    <div class="bg-sticker" style="top:70%;right:18%;width:48px;--r:-3deg;animation-duration:20s;animation-delay:-5s">
+      <img src="stickers/star.png" alt="">
+    </div>
+    <div class="bg-sticker" style="top:18%;left:40%;width:40px;--r:12deg;animation-duration:16s;animation-delay:-9s">
+      <img src="stickers/pink_bow_01.png" alt="">
+    </div>
+    <div class="bg-sticker" style="bottom:8%;right:30%;width:55px;--r:-7deg;animation-duration:25s;animation-delay:-3s">
+      <img src="stickers/music_note.png" alt="">
+    </div>
+  </div>
+
+  <div class="card">
+    <img class="card-deco tl" src="stickers/pink_bow_01.png" alt="">
+    <img class="card-deco tr" src="stickers/pink_bow_02.png" alt="">
+    <img class="card-deco bl" src="stickers/daisy_01.png" alt="">
+
+    <div class="quiz-content" id="quizContent">
+      <div class="title">
+        <img src="stickers/pink_bow_01.png" alt="">
+        Hi baby
+      </div>
+      <div id="question"></div>
+      <div class="buttons">
+        <button class="btn" id="v1" type="button"></button>
+        <button class="btn" id="v2" type="button"></button>
+      </div>
+      <div class="progress" id="progress"></div>
+    </div>
+
+    <div class="final" id="finalScreen">
+      <img src="stickers/my_melody_face_smiling.png" alt="">
+      <h2>You got them all!</h2>
+      <p>You're officially my cute bebi forever</p>
+    </div>
+  </div>
+<div id="overlay" style="position:fixed;inset:0;background:#000;color:#fff;display:grid;place-items:center;cursor:pointer;z-index:999;">
+  Click anywhere to enter
+</div>
+  <div id="feed"></div>
+  <script>
+
+  const audio = new Audio("song/closer.mp3");
+  audio.loop = true;
+
+  document.getElementById("overlay").addEventListener("click", function() {
+    audio.play();
+    this.remove();
+  });
+
+
+    const data = {
+      questions: [
+        ["Are you my kryz-lyn?", "yes", "no"],
+        ["What's my favorite color?", "green", "blue"],
+        ["My favorite ice cream flavor?", "Chocolate", "Vanilla"]
+      ],
+      correct: [0, 0, 1]
+    };
+
+    let index = 0;
+    const ques = document.getElementById("question");
+    const bot1 = document.getElementById("v1");
+    const bot2 = document.getElementById("v2");
+    const feed = document.getElementById("feed");
+    const progress = document.getElementById("progress");
+    const quizContent = document.getElementById("quizContent");
+    const finalScreen = document.getElementById("finalScreen");
+
+    function showFeedback(text, isCorrect) {
+      feed.textContent = text;
+      feed.className = isCorrect ? "correct show" : "wrong show";
+      setTimeout(() => feed.classList.remove("show"), 1200);
+    }
+
+    function refresh() {
+      if (index >= data.questions.length) {
+        quizContent.classList.add("hidden");
+        finalScreen.classList.add("show");
+        setTimeout(() => { window.location.replace("home.html"); }, 1600);
+        return;
+      }
+      const q = data.questions[index];
+      ques.textContent = q[0];
+      bot1.textContent = q[1];
+      bot2.textContent = q[2];
+      bot1.disabled = false;
+      bot2.disabled = false;
+      progress.textContent = `Question ${index + 1} of ${data.questions.length}`;
+    }
+
+    function handleAnswer(choiceIndex) {
+      bot1.disabled = true;
+      bot2.disabled = true;
+      const isCorrect = choiceIndex === data.correct[index];
+      if (isCorrect) {
+        showFeedback("Correct ✓", true);
+        index++;
+        setTimeout(refresh, 900);
+      } else {
+        showFeedback("Wrong ✗", false);
+        setTimeout(() => {
+          alert("You're not my cute bebi");
+          alert("Destroying...");
+          document.body.innerHTML = `
+            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;
+              background:linear-gradient(160deg,#fff5f8,#ffe4ec);color:#e85a8b;font-family:system-ui;text-align:center;padding:2rem;">
+              <img src="stickers/my_melody_face_surprised.png" style="width:80px;margin-bottom:1rem" alt="">
+              <h1 style="font-size:1.6rem;margin-bottom:0.5rem;">Access denied</h1>
+              <p style="opacity:0.8;">Only the real bebi knows the answers.</p>
+            </div>`;
+        }, 800);
+      }
+    }
+
+    bot1.addEventListener("click", () => handleAnswer(0));
+    bot2.addEventListener("click", () => handleAnswer(1));
+    refresh();
+  </script>
+</body>
+</html>
